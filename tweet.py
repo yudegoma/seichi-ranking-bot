@@ -66,8 +66,8 @@ class Listener(tweepy.StreamListener):
 
 
 # ツイート
-def tweet(ranks: dict, title: str):
-    text = random_unicode() + title + random_unicode() + "\n" + dict_to_shaping_text(ranks)
+def tweet(rank: dict, title: str):
+    text = random_unicode() + title + random_unicode() + "\n" + dict_to_shaping_text(rank)
     if title != config.min30_title:
         text += "#整地鯖"
 
@@ -78,7 +78,7 @@ def tweet(ranks: dict, title: str):
         os.remove(config.weekly_path)
     if title == config.monthly_title:
         os.remove(config.monthly_path)
-    ranks.clear()
+    rank.clear()
 
 
 def update_ranking():
