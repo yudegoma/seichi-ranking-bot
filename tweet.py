@@ -66,18 +66,18 @@ class Listener(tweepy.StreamListener):
 
 
 # ツイート
-def tweet(ranks: dict, rank_name: str):
-    text = random_unicode() + rank_name + random_unicode() + "\n" + dict_to_shaping_text(ranks)
-    if rank_name != "ざっくり30分整地量ランキング":
+def tweet(ranks: dict, title: str):
+    text = random_unicode() + title + random_unicode() + "\n" + dict_to_shaping_text(ranks)
+    if title != config.min30_title:
         text += "#整地鯖"
 
     api.update_status(text)
-    if rank_name == "日間整地量ランキング":
-        os.remove("./daily.json")
-    if rank_name == "週間整地量ランキング":
-        os.remove("./weekly.json")
-    if rank_name == "月間整地量ランキング":
-        os.remove("./monthly.json")
+    if title == config.daily_title:
+        os.remove(config.daily_path)
+    if title == config.weekly_title:
+        os.remove(config.weekly_path)
+    if title == config.monthly_title:
+        os.remove(config.monthly_path)
     ranks.clear()
 
 
@@ -106,41 +106,41 @@ def update_ranking():
     daily_rank = sort_dict(daily_rank)
     weekly_rank = sort_dict(add_dict(weekly_rank, diff_daily))
     monthly_rank = sort_dict(add_dict(monthly_rank, diff_daily))
-    write_file("daily.json", daily_rank)
-    write_file("weekly.json", weekly_rank)
-    write_file("monthly.json", monthly_rank)
+    write_file(config.daily_path, daily_rank)
+    write_file(config.weekly_path, weekly_rank)
+    write_file(config.monthly_path, monthly_rank)
 
-    tweet(diff_daily, "ざっくり30分整地量ランキング")
+    tweet(diff_daily, config.min30_title)
     print_ranking(daily_rank)
 
 
 def monthly_job():
     if datetime.datetime.today().day != 1:
         return
-    tweet(monthly_rank, "月間整地量ランキング")
+    tweet(monthly_rank, config.monthly_title)
 
 
 listener = Listener()
 stream = tweepy.Stream(auth, listener, secure=True)
 stream.filter(track=["@seichi_ranking"], is_async=True)
 
-if os.path.exists("./daily.json"):
-    daily_rank = read_file("./daily.json")
+if os.path.exists(config.daily_path):
+    daily_rank = read_file(config.daily_path)
 else:
     daily_rank = {}
-if os.path.exists("./weekly.json"):
-    weekly_rank = read_file("./weekly.json")
+if os.path.exists(config.weekly_path):
+    weekly_rank = read_file(config.weekly_path)
 else:
     weekly_rank = {}
-if os.path.exists("./monthly.json"):
-    monthly_rank = read_file("./monthly.json")
+if os.path.exists(config.monthly_path):
+    monthly_rank = read_file(config.monthly_path)
 else:
     monthly_rank = {}
 
 schedule.every().day.at("23:59").do(update_ranking)
 schedule.every().day.at("00:00").do(monthly_job)
-schedule.every().sunday.at("00:00").do(tweet, ranks=weekly_rank, rank_name="週間整地量ランキング")
-schedule.every().day.at("00:00").do(tweet, ranks=daily_rank, rank_name="日間整地量ランキング")
+schedule.every().sunday.at("00:00").do(tweet, ranks=weekly_rank, title=config.weekly_title)
+schedule.every().day.at("00:00").do(tweet, ranks=daily_rank, title=config.daily_title)
 schedule.every(30).minutes.do(update_ranking)
 
 while True:
