@@ -4,8 +4,8 @@ AT = ""
 AS = ""
 
 daily_path = "./daily.json"
-weekly_path = "./weekly_json"
-monthly_path = "./monthly_json"
+weekly_path = "./weekly.json"
+monthly_path = "./monthly.json"
 
 daily_title = "日間整地量ランキング"
 weekly_title = "週間整地量ランキング"
