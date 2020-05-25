@@ -1,10 +1,37 @@
+#!/usr/bin/env python
 import requests
 import random
 from collections import OrderedDict, Counter
 import json
+import config
+import os
 
 uuid_url = "https://api.mojang.com/user/profiles/"
 name_url = "https://api.mojang.com/users/profiles/minecraft/"
+
+
+def daily_rank() -> dict:
+    return read_file(config.daily_path) if os.path.exists(config.daily_path) else {}
+
+
+def weekly_rank() -> dict:
+    return read_file(config.weekly_path) if os.path.exists(config.weekly_path) else {}
+
+
+def monthly_rank() -> dict:
+    return read_file(config.monthly_path) if os.path.exists(config.monthly_path) else {}
+
+
+def daily_reply(uuid: str) -> str:
+    return ("daily: " + str(daily_rank()[uuid]) + "\n") if uuid in daily_rank() else "daily: 0\n"
+
+
+def weekly_reply(uuid: str) -> str:
+    return ("weekly: " + str(weekly_rank()[uuid]) + "\n") if uuid in weekly_rank() else "weekly: 0\n"
+
+
+def monthly_reply(uuid: str) -> str:
+    return ("monthly: " + str(monthly_rank()[uuid]) + "\n") if uuid in monthly_rank() else "monthly: 0\n"
 
 
 def sort_dict(d: dict) -> dict:
@@ -37,10 +64,10 @@ def name_to_uuid(name: str) -> str:
     return r_get.json()["id"]
 
 
-def dict_to_shaping_text(ranks: dict) -> str:
+def dict_to_shaping_text(rank: dict) -> str:
     i = 0
     result = ""
-    for uuid, value in ranks.items():
+    for uuid, value in rank.items():
         i += 1
         result += "{}位: {:>16}: {}\n".format(i, uuid_to_name(uuid), value)
         if i == 5:
@@ -49,6 +76,7 @@ def dict_to_shaping_text(ranks: dict) -> str:
 
 
 def print_ranking(ranks: dict):
+    print("------print_ranking-----")
     for k, v in ranks.items():
         print(k, v)
 
@@ -61,5 +89,3 @@ def read_file(path: str) -> dict:
 def write_file(path: str, d: dict):
     with open(path, "w") as f:
         json.dump(d, f, indent=4)
-
-
