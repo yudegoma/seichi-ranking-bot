@@ -8,9 +8,8 @@ import os
 import config
 
 url = "https://w4.minecraftserver.jp/api/ranking"
-payload = {"type": "break", "duration": "daily"}
+payload = {"type": "break", "duration": "daily"}    # 日間整地ランキング
 
-# 認証
 auth = tweepy.OAuthHandler(config.CK, config.CS)
 auth.set_access_token(config.AT, config.AS)
 
@@ -27,16 +26,14 @@ class Listener(tweepy.StreamListener):
         reply = status.text.split(" ")
         while "" in reply:
             reply.remove("")
-            
         name = reply[len(reply) - 1]
-        if name == "@seichi_ranking":
-            return True
         uuid = name_to_uuid(name)
         text = "@" + str(status.user.screen_name) + "\n" + name + ": \n"
 
         if uuid == "#null":
             text += name + "というmcidは存在しないヨ"
         else:
+            # リプライに各文字列が含まれていたら対応したテキストを追加
             if "daily" in reply:
                 text += daily_reply(uuid)
             if "weekly" in reply:
@@ -59,19 +56,22 @@ class Listener(tweepy.StreamListener):
 
 
 # ツイート
-def tweet(title: str, rank={}):
+def tweet(title: str, rm=True, rank={}):
     print("----tweet-----")
     print(daily_rank())
     text = random_unicode() + title + random_unicode() + "\n"
     if title == config.daily_title:
         text += dict_to_shaping_text(daily_rank()) + "#整地鯖"
-        os.remove(config.daily_path)
+        if rm:
+            os.remove(config.daily_path)
     elif title == config.weekly_title:
         text += dict_to_shaping_text(weekly_rank()) + "#整地鯖"
-        os.remove(config.weekly_path)
+        if rm:
+            os.remove(config.weekly_path)
     elif title == config.monthly_title:
         text += dict_to_shaping_text(monthly_rank()) + "#整地鯖"
-        os.remove(config.monthly_path)
+        if rm:
+            os.remove(config.monthly_path)
     else:
         text += dict_to_shaping_text(rank)
     print(text)
@@ -81,11 +81,14 @@ def tweet(title: str, rank={}):
 def update_ranking():
     b_daily_rank = daily_rank()
 
+    # 日間整地ランキングを取得(100位まで)
     r_get = requests.get(url, params=payload)
     if r_get.status_code != requests.codes.ok:
         return
     r_json = r_get.json()
     ranks = r_json["ranks"].copy()
+
+    # 日間整地ランキングの全データを取得(100位以降)
     while len(r_json["ranks"]) > 99:
         next_p = {"type": "break", "offset": str(len(ranks) - 1), "duration": "daily"}
         r_get = requests.get(url, params=next_p)
@@ -93,6 +96,7 @@ def update_ranking():
         ranks.extend(r_json["ranks"].copy())
 
     daily_rank_ = {}
+    # uuidと整地量を対応させて保存(mcid変更に対応できるように)
     for rank in ranks:
         daily_rank_[rank["player"]["uuid"].replace("-", "")] = int(rank["data"]["raw_data"])
 
@@ -103,7 +107,7 @@ def update_ranking():
     write_file(config.weekly_path, sort_dict(add_dict(weekly_rank(), diff_daily)))
     write_file(config.monthly_path, sort_dict(add_dict(monthly_rank(), diff_daily)))
 
-    tweet(config.min30_title, diff_daily)
+    tweet(config.min30_title, rank=diff_daily)
     print_ranking(daily_rank())
 
 
@@ -118,6 +122,7 @@ listener = Listener()
 stream = tweepy.Stream(auth, listener, secure=True)
 stream.filter(track=["@seichi_ranking"], is_async=True)
 
+# 設定した時間に実行
 schedule.every(30).minutes.do(update_ranking)
 schedule.every().day.at("23:59").do(update_ranking)
 schedule.every().day.at("00:00").do(monthly_job)
