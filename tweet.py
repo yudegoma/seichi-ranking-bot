@@ -10,6 +10,7 @@ import config
 url = "https://w4.minecraftserver.jp/api/ranking"
 payload = {"type": "break", "duration": "daily"}
 
+# 認証
 auth = tweepy.OAuthHandler(config.CK, config.CS)
 auth.set_access_token(config.AT, config.AS)
 
@@ -45,7 +46,7 @@ class Listener(tweepy.StreamListener):
             if "daily" not in reply and "weekly" not in reply and "monthly" not in reply and len(reply) == 2:
                 text += daily_reply(uuid) + weekly_reply(uuid) + monthly_reply(uuid)
 
-        api.update_status(text, status.id)
+        api.update_status(text, status.id)  # 返信
         return True
 
     def on_error(self, status_code):
@@ -74,7 +75,7 @@ def tweet(title: str, rank={}):
     else:
         text += dict_to_shaping_text(rank)
     print(text)
-    api.update_status(text)
+    api.update_status(text) # ツイート
 
 
 def update_ranking():
@@ -107,6 +108,7 @@ def update_ranking():
 
 
 def monthly_job():
+    # scheduleだと毎月の処理ができない
     if datetime.datetime.today().day != 1:
         return
     tweet(config.monthly_title)
