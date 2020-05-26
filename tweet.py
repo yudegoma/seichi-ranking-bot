@@ -26,7 +26,10 @@ class Listener(tweepy.StreamListener):
         reply = status.text.split(" ")
         while "" in reply:
             reply.remove("")
+            
         name = reply[len(reply) - 1]
+        if name == "@seichi_ranking":
+            return True
         uuid = name_to_uuid(name)
         text = "@" + str(status.user.screen_name) + "\n" + name + ": \n"
 
