@@ -88,7 +88,7 @@ def sub_dict(d1: dict, d2: dict) -> dict:
 def random_unicode() -> chr:
     """
     適当な絵文字を返す
-    :return: 絵文字のUnicode
+    :return: 絵文字
     """
     return chr(random.choice(
         (random.randrange(0x1F300, 0x1F64F), random.randrange(0x1F680, 0x1F6FA), random.randrange(0x1F90D, 0x1F9AA))))
